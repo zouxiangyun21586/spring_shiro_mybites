@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+
+	<!-- 配置緩存管理器 -->
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+		<!-- 指定 ehcache 的配置文件 -->
+		<property name="cacheManagerConfigFile" value="classpath:ehcache-shiro.xml" />
+	</bean>
+	
+	<!-- 配置进行授权和认证的 Realm -->
+	<bean id="AccountRealm" class="com.yr.shiro.util.AccountRealm" /> <!-- init-method="setCredentialMatcher" 加密方法(加上就默认密码需要加盐加密才能使用) -->
+	
+	<!-- 配置 Shiro 的 SecurityManager(会话管理) Bean. -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="cacheManager" ref="cacheManager" /> <!-- 引用缓存(可以不使用,因为上面配置了所以引用) -->
+		<property name="realm" ref="AccountRealm" />
+	</bean>
+	
+	<!-- 配置 Bean 后置处理器: 会自动的调用和 Spring 整合后各个组件的生命周期方法. init() destory() -->
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+	
+	<!-- web.xml中shiro的filter对应的bean -->
+	<!-- Shiro 的Web过滤器 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- 装配 securityManager (这个属性是必须的) -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 配置登陆页面 -->
+		<!-- 没有登录的用户请求需要登录的页面时自动跳转到登录页面, 不是必须的属性, 不输入地址的话会自动寻找项目web项目的根目录下的"/login.jsp"页面 -->
+		<property name="loginUrl" value="/show/shiro-login.jsp" />
+		<!-- 认证成功统一跳转到first.action，建议不配置，shiro认证成功自动到上一个请求路径 -->
+		<!-- 登录成功默认跳转页面，不配置则跳转至"/"。如果登陆前点击的一个需要登录的页面, 则在登录自动跳转到那个需要登录的页面.不跳转到此 -->
+		<property name="successUrl" value="/show/shiro-welcome.jsp" />
+		<!-- 通过unauthorizedUrl指定没有权限操作时跳转页面 (没有权限默认跳转的页面) -->
+		<property name="unauthorizedUrl" value="/show/shiro-notPower.jsp" />
+		<!-- 过虑器链定义，从上向下顺序执行，一般将/**放在最下边 -->
+		<!-- <property name="filterChainDefinitions"> -->
+		<!-- 
+			anon 没有参数，表示可以匿名使用
+			authc 需要认证(登录)才能使用，没有参数
+			roles 有参数,可以写多个参数,如果有多个参数必须是所有参数都通过的情况才算通过(eg (多参) :admins/user/**=roles["admin,guest"])
+			perms 同上 (多参: /admins/user/**=perms["user:add:*,user:modify:*"])
+			rest eg: /admins/user/**=rest[user],根据请求的方法,类似 /admins/user/**=perms[user:method] ,其中method为post,get,delete 等
+			port eg: /admins/user/**=port[8081],当请求的url的端口不是8081时跳转至 schemal://serverName:8081?queryString,
+					其中schmal是协议http或https等, serverName是你访问的host,8081是url配置里port的端口, queryString是你访问的url里的?后面的参数
+			authcBasic 没有参数表示httpBasic认证
+			ssl 没有参数，表示安全的url请求，协议为https
+			user 没有参数表示必须存在用户，当登入操作时不做检查
+			
+			注：anon，authcBasic，auchc，user是认证过滤器,
+			   perms，roles，ssl，rest，port是授权过滤器
+		 -->
+			<!-- <value>
+				配置登出: 使用 logout 过滤器
+				有顺序执行,进入一个后就不往下执行了
+				/shiro-logout = logout
+				/addAccount = anon 注册后台不拦截
+				/show/shiro-add.jsp = anon 注册页面不拦截
+				/shiro_login = anon 登录后台不进行拦截
+				/show/shiro-login = anon 登录页面不需要验证
+				/show/welcome.jsp = anon 欢迎界面不拦截
+				/scripts/* = anon js 不拦截
+				/show/admin.jsp = roles[admin] 要进入admin页面需admin角色才能进入
+				/show/shiro-show.jsp = roles[user] 要进入显示页面必须要user角色
+				/show/account.jsp = roles[userRoot] 要进入account界面必须要 account角色 
+				/show/notCome.jsp = perms[del,upd] 要进入notCome界面需有 del和upd 权限
+				/** = authc authc 表所有的url都需认证通过才可以访问
+				user:add del :某实体
+				用户: 权限 : 某实体
+			</value> 
+		</property> -->
+		<!-- 读取初始自定义权限内容-->
+	    <property name="filterChainDefinitions" value="#{shiroManager.loadFilterChainDefinitions()}"/>
+	    <property name="filters">
+           <util:map>
+              <entry key="login" value-ref="login"></entry>
+              <entry key="role" value-ref="role"></entry>
+              <entry key="simple" value-ref="simple"></entry>
+              <entry key="permission" value-ref="permission"></entry>
+              <entry key="kickout" value-ref="kickoutSessionFilter"></entry>
+           </util:map>
+       </property>
+	</bean>
+	
+	<!-- session 校验单个用户是否多次登录 -->
+	<bean id="kickoutSessionFilter"   class="com.yr.shiro.filter.KickoutSessionFilter">  
+	    <property name="kickoutUrl" value="/shiro-login.jsp?kickout"/>  
+	</bean>  
+	
+	<!-- 认证数据库存储-->
+    <bean id="shiroManager" class="com.yr.shiro.service.impl.ShiroManagerImpl"/>
+    <bean id="login" class="com.yr.shiro.filter.LoginFilter"/>
+    <bean id="role" class="com.yr.shiro.filter.RoleFilter"/>
+    <bean id="permission" class="com.yr.shiro.filter.PermissionFilter"/>
+    <bean id="simple" class="com.yr.shiro.filter.SimpleAuthFilter"/>
+	
+</beans>

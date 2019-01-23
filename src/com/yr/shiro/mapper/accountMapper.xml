@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yr.shiro.mapper.AccountMapper">
+	<resultMap type="AccountEntity" id="accountentityResult">
+		<result column="id" property="id" />
+		<result column="account" property="account" />
+		<result column="password" property="password" />
+	</resultMap>
+
+	<!-- 查询所有部门 -->
+	<select id="queryAccount" resultMap="accountentityResult">
+		select * from accountentity
+	</select>
+
+
+	<!-- 添加部门 -->
+	<insert id="addAccount" parameterType="AccountEntity">
+		insert into
+		accountentity(account,password)values(#{account},#{password})
+	</insert>
+
+	<!-- 删除部门 -->
+	<delete id="delAccount" parameterType="int">
+		delete from accountentity
+		<where>
+			id = #{id}
+		</where>
+	</delete>
+
+	<!-- 根据id查询回显数据 -->
+	<select id="getAccount" parameterType="int" resultMap="accountentityResult">
+		select
+		* from accountentity where id = #{id}
+	</select>
+
+	<!-- 修改部门 -->
+	<update id="updAccount" parameterType="AccountEntity">
+		update accountentity set account=#{account},password=#{password} where id = #{id}
+	</update>
+
+	<!-- 查询所有部门 -->
+	<select id="findAccountName" resultMap="accountentityResult" parameterType="String">
+		select * from accountentity 
+		<where>
+			account = #{account}
+		</where>
+	</select>
+
+</mapper>

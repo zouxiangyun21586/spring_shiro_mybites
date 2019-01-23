@@ -1,0 +1,8 @@
+/applicationContext-shiro.xml
+/applicationContext.xml
+/com/
+/conn.properties
+/ehcache-shiro.xml
+/mybatis-config.xml
+/shiro_base_auth.ini
+/springmvc.xml

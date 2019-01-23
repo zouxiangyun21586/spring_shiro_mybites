@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<!-- 将bean包下所有的实体类引入配置文件中方便使用 -->
+		<package name="com.yr.shiro.entity" />
+	</typeAliases>
+
+	<mappers>
+		<!-- 注册departmentMapper.xml文件,departmentMapper.xml位于com.yr.xml这个包下 -->
+		<mapper resource="com/yr/shiro/mapper/accountMapper.xml" />
+	</mappers>
+</configuration>
